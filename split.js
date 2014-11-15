@@ -5,11 +5,14 @@ if (args.length == 0) {
 }
 
 var FILENAME = /^\s*([a-z,0-9]+\.xml)\s*$/i;
-var fso = new ActiveXObject("Scripting.FileSystemObject");
+var FSO = new ActiveXObject("Scripting.FileSystemObject");
 
 var input_file = args(0);
+var output_filenames = [];
+var target_directory = FSO.GetParentFolderName(FSO.GetAbsolutePathName(input_file));
+
 try {
-  var ts = fso.OpenTextFile(input_file, 1);
+  var ts = FSO.OpenTextFile(input_file, 1);
   var s,match,current_filename,current_file;
   while (!ts.AtEndOfStream) {
     s = ts.ReadLine();
@@ -18,13 +21,14 @@ try {
       current_filename = match[1];
       if (current_filename) {
 	current_file && current_file.close();
-	WScript.Echo('writing to "'+current_filename+'"');
-	current_file = fso.CreateTextFile(current_filename, true);
+	current_file = FSO.CreateTextFile(FSO.BuildPath(target_directory, current_filename), true);
+	output_filenames.push(current_filename);
       }
     } else if (current_filename) {
       current_file.WriteLine(s);
     }
   }
+  current_file && current_file.close();
 } catch(e) {
   WScript.Echo(e.message);
   WScript.Quit(1);
@@ -32,5 +36,5 @@ try {
   if (ts) { ts.Close() }
 }
 
-WScript.Echo("finished");
+WScript.Echo("Було створено "+output_filenames.length+" файл(и):\n"+output_filenames.join("\n")+"\nв папці "+target_directory);
 //vim:shiftwidth=2
